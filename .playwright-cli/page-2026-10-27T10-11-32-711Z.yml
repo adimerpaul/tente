@@ -1,0 +1,187 @@
+- generic [active] [ref=f10e1]:
+  - generic [ref=f10e43]:
+    - banner [ref=f10e44]:
+      - toolbar [ref=f10e45]:
+        - button "Menu" [ref=f10e46] [cursor=pointer]:
+          - img [ref=f10e48]: keyboard_double_arrow_left
+        - generic [ref=f10e49]: Tenté
+        - button "Expandir" [ref=f10e51] [cursor=pointer]:
+          - generic [ref=f10e52]:
+            - generic [ref=f10e57]:
+              - generic [ref=f10e58]: admin
+              - generic [ref=f10e59]: Administrador
+            - generic [ref=f10e60]: expand_more
+    - complementary [ref=f10e61]:
+      - generic [ref=f10e66]:
+        - img "Tenté" [ref=f10e68]
+        - generic [ref=f10e69]: Módulos
+        - list [ref=f10e70]:
+          - link "Inicio" [ref=f10e71] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f10e72]: dashboard
+          - link "Nueva venta" [ref=f10e76] [cursor=pointer]:
+            - /url: /ventas/nueva
+            - generic [ref=f10e77]: point_of_sale
+          - link "Ventas" [ref=f10e81] [cursor=pointer]:
+            - /url: /ventas
+            - generic [ref=f10e82]: receipt_long
+          - link "Cocina" [ref=f10e86] [cursor=pointer]:
+            - /url: /cocina
+            - generic [ref=f10e87]: soup_kitchen
+          - link "Clientes" [ref=f10e91] [cursor=pointer]:
+            - /url: /clientes
+            - generic [ref=f10e92]: groups
+          - link "Productos" [ref=f10e96] [cursor=pointer]:
+            - /url: /productos
+            - generic [ref=f10e97]: lunch_dining
+          - link "Reportes" [ref=f10e101] [cursor=pointer]:
+            - /url: /reportes
+            - generic [ref=f10e102]: insights
+          - link "Usuarios" [ref=f10e106] [cursor=pointer]:
+            - /url: /usuarios
+            - generic [ref=f10e107]: people
+          - link "Roles y permisos" [ref=f10e111] [cursor=pointer]:
+            - /url: /roles
+            - generic [ref=f10e112]: admin_panel_settings
+          - link "Configuración" [ref=f10e116] [cursor=pointer]:
+            - /url: /configuracion
+            - generic [ref=f10e117]: settings
+        - generic [ref=f10e121]:
+          - generic [ref=f10e122]: Tenté v1.0.0
+          - generic [ref=f10e123]: © 2026 Tenté · Sabor y Sazón
+        - button "Salir" [ref=f10e124] [cursor=pointer]:
+          - generic [ref=f10e125]: logout
+    - main [ref=f10e130]:
+      - generic [ref=f10e131]:
+        - generic [ref=f10e132]:
+          - generic [ref=f10e133]: Hola, ADMINISTRADOR TENTÉ
+          - generic [ref=f10e134]: Hoy
+        - generic [ref=f10e135]:
+          - button "Hoy" [pressed] [ref=f10e136] [cursor=pointer]
+          - button "Ayer" [ref=f10e139] [cursor=pointer]
+          - button "Semana" [ref=f10e142] [cursor=pointer]
+          - button "Mes" [ref=f10e145] [cursor=pointer]
+          - button "Año" [ref=f10e148] [cursor=pointer]
+          - button "Rango" [ref=f10e151] [cursor=pointer]
+        - link "Nueva venta" [ref=f10e154] [cursor=pointer]:
+          - /url: /ventas/nueva
+          - generic [ref=f10e155]:
+            - img [ref=f10e156]: point_of_sale
+            - generic [ref=f10e157]: Nueva venta
+      - generic [ref=f10e158]:
+        - generic [ref=f10e160]:
+          - generic [ref=f10e161]: payments
+          - generic [ref=f10e164]:
+            - generic [ref=f10e165]: Ventas del periodo
+            - generic [ref=f10e166]: Bs 0,00
+            - generic [ref=f10e167]: 0 ventas
+        - generic [ref=f10e169]:
+          - generic [ref=f10e170]: receipt_long
+          - generic [ref=f10e173]:
+            - generic [ref=f10e174]: Pedidos
+            - generic [ref=f10e175]: "0"
+            - generic [ref=f10e176]: Ventas completadas
+        - generic [ref=f10e178]:
+          - generic [ref=f10e179]: lunch_dining
+          - generic [ref=f10e182]:
+            - generic [ref=f10e183]: Platos vendidos
+            - generic [ref=f10e184]: "0"
+            - generic [ref=f10e185]: Unidades acumuladas
+        - generic [ref=f10e187]:
+          - generic [ref=f10e188]: local_offer
+          - generic [ref=f10e191]:
+            - generic [ref=f10e192]: Ticket promedio
+            - generic [ref=f10e193]: Bs 0,00
+            - generic [ref=f10e194]: Promedio por pedido
+      - generic [ref=f10e195]:
+        - generic [ref=f10e197]:
+          - generic [ref=f10e198]:
+            - generic [ref=f10e199]:
+              - generic [ref=f10e200]: Evolución de ventas
+              - generic [ref=f10e201]: Hoy · ingresos y cantidad de ventas
+            - button [ref=f10e202]:
+              - generic:
+                - img: refresh
+          - generic [ref=f10e208]:
+            - 'application "line chart with 2 data series: Ingresos, Ventas" [ref=f10e209]':
+              - generic [ref=f10e212]:
+                - generic "Bs 6" [ref=f10e213]
+                - generic "Bs 5" [ref=f10e214]
+                - generic "Bs 4" [ref=f10e215]
+                - generic "Bs 3" [ref=f10e216]
+                - generic "Bs 2" [ref=f10e217]
+                - generic "Bs 1" [ref=f10e218]
+                - generic "Bs 0" [ref=f10e219]
+              - generic [ref=f10e225]:
+                - generic "6" [ref=f10e226]
+                - generic "5" [ref=f10e227]
+                - generic "4" [ref=f10e228]
+                - generic "3" [ref=f10e229]
+                - generic "2" [ref=f10e230]
+                - generic "1" [ref=f10e231]
+                - generic "0" [ref=f10e232]
+            - status [ref=f10e233]
+        - generic [ref=f10e235]:
+          - generic [ref=f10e236]:
+            - generic [ref=f10e237]: Formas de pago
+            - generic [ref=f10e238]: Distribución del total vendido
+          - generic [ref=f10e241]:
+            - application "donut chart with 0 data series" [ref=f10e242]
+            - status [ref=f10e244]
+      - generic [ref=f10e245]:
+        - generic [ref=f10e247]:
+          - generic [ref=f10e248]:
+            - generic [ref=f10e249]: Ventas por usuario
+            - generic [ref=f10e250]: Total vendido por cada vendedor
+          - generic [ref=f10e253]:
+            - 'application "bar chart with 1 data series: Total vendido" [ref=f10e254]':
+              - generic [ref=f10e256]:
+                - generic [ref=f10e259]:
+                  - generic "0" [ref=f10e260]
+                  - generic "1" [ref=f10e261]
+                  - generic "2" [ref=f10e262]
+                  - generic "3" [ref=f10e263]
+                  - generic "4" [ref=f10e264]
+                  - generic "5" [ref=f10e265]
+                  - generic "6" [ref=f10e266]
+                  - generic "7" [ref=f10e267]
+                  - generic "8" [ref=f10e268]
+                  - generic "9" [ref=f10e269]
+                  - generic "10" [ref=f10e270]
+                - generic [ref=f10e272]:
+                  - generic "Bs 12" [ref=f10e273]
+                  - generic "Bs 11" [ref=f10e274]
+                  - generic "Bs 10" [ref=f10e275]
+                  - generic "Bs 9" [ref=f10e276]
+                  - generic "Bs 8" [ref=f10e277]
+                  - generic "Bs 7" [ref=f10e278]
+                  - generic "Bs 6" [ref=f10e279]
+                  - generic "Bs 5" [ref=f10e280]
+                  - generic "Bs 4" [ref=f10e281]
+                  - generic "Bs 3" [ref=f10e282]
+                  - generic "Bs 2" [ref=f10e283]
+                  - generic "Bs 1" [ref=f10e284]
+                  - generic "Bs 0" [ref=f10e285]
+            - status [ref=f10e286]
+        - generic [ref=f10e288]:
+          - generic [ref=f10e289]:
+            - generic [ref=f10e290]:
+              - generic [ref=f10e291]: Más vendidos
+              - generic [ref=f10e292]: Por producto · cantidad y total
+            - generic [ref=f10e293]:
+              - button "Productos" [pressed] [ref=f10e294] [cursor=pointer]
+              - button "Categorías" [ref=f10e297] [cursor=pointer]
+            - link [ref=f10e300] [cursor=pointer]:
+              - /url: /productos
+              - img [ref=f10e302]: lunch_dining
+          - separator [ref=f10e303]
+          - list [ref=f10e304]:
+            - listitem [ref=f10e305]:
+              - generic [ref=f10e306]: Sin ventas en este periodo
+  - alert [ref=f10e307]:
+    - generic [ref=f10e308]:
+      - generic [ref=f10e309]:
+        - img [ref=f10e310]: check_circle
+        - generic [ref=f10e311]: Bienvenido ADMINISTRADOR TENTÉ
+      - button [ref=f10e314] [cursor=pointer]:
+        - img [ref=f10e316]: close

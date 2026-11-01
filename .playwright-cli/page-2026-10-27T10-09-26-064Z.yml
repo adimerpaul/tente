@@ -1,0 +1,64 @@
+- generic [active] [ref=f5e1]:
+  - generic [ref=f5e53]:
+    - banner [ref=f5e54]:
+      - toolbar [ref=f5e55]:
+        - button "Menu" [ref=f5e56] [cursor=pointer]:
+          - img [ref=f5e58]: keyboard_double_arrow_left
+        - generic [ref=f5e59]: Tenté
+        - button "Expandir" [ref=f5e61] [cursor=pointer]:
+          - generic [ref=f5e62]:
+            - generic [ref=f5e67]:
+              - generic [ref=f5e68]: vendedor
+              - generic [ref=f5e69]: Vendedor
+            - generic [ref=f5e70]: expand_more
+    - complementary [ref=f5e71]:
+      - generic [ref=f5e76]:
+        - img "Tenté" [ref=f5e78]
+        - generic [ref=f5e79]: Módulos
+        - list [ref=f5e80]:
+          - link "Inicio" [ref=f5e81] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f5e82]: dashboard
+          - link "Nueva venta" [ref=f5e86] [cursor=pointer]:
+            - /url: /ventas/nueva
+            - generic [ref=f5e87]: point_of_sale
+          - link "Ventas" [ref=f5e91] [cursor=pointer]:
+            - /url: /ventas
+            - generic [ref=f5e92]: receipt_long
+          - link "Cocina" [ref=f5e96] [cursor=pointer]:
+            - /url: /cocina
+            - generic [ref=f5e97]: soup_kitchen
+          - link "Clientes" [ref=f5e101] [cursor=pointer]:
+            - /url: /clientes
+            - generic [ref=f5e102]: groups
+          - link "Productos" [ref=f5e106] [cursor=pointer]:
+            - /url: /productos
+            - generic [ref=f5e107]: lunch_dining
+        - generic [ref=f5e111]:
+          - generic [ref=f5e112]: Tenté v1.0.0
+          - generic [ref=f5e113]: © 2026 Tenté · Sabor y Sazón
+        - button "Salir" [ref=f5e114] [cursor=pointer]:
+          - generic [ref=f5e115]: logout
+    - main [ref=f5e120]:
+      - generic [ref=f5e122]:
+        - img "Tenté" [ref=f5e123]
+        - generic [ref=f5e124]: Hola, VENDEDOR TENTÉ
+        - generic [ref=f5e125]: Sabor y Sazón
+        - generic [ref=f5e126]:
+          - link "Nueva venta" [ref=f5e127] [cursor=pointer]:
+            - /url: /ventas/nueva
+            - generic [ref=f5e128]:
+              - img [ref=f5e129]: point_of_sale
+              - generic [ref=f5e130]: Nueva venta
+          - link "Cocina" [ref=f5e131] [cursor=pointer]:
+            - /url: /cocina
+            - generic [ref=f5e132]:
+              - img [ref=f5e133]: soup_kitchen
+              - generic [ref=f5e134]: Cocina
+  - alert [ref=f5e43]:
+    - generic [ref=f5e44]:
+      - generic [ref=f5e45]:
+        - img [ref=f5e46]: check_circle
+        - generic [ref=f5e47]: Bienvenido VENDEDOR TENTÉ
+      - button [ref=f5e50] [cursor=pointer]:
+        - img [ref=f5e52]: close

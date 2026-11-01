@@ -1,0 +1,194 @@
+- generic [ref=f7e3]:
+  - banner [ref=f7e4]:
+    - toolbar [ref=f7e5]:
+      - button "Menu" [ref=f7e6] [cursor=pointer]:
+        - img [ref=f7e8]: keyboard_double_arrow_left
+      - generic [ref=f7e9]: Tenté
+      - button "Expandir" [ref=f7e11] [cursor=pointer]:
+        - generic [ref=f7e12]:
+          - generic [ref=f7e17]:
+            - generic [ref=f7e18]: vendedor
+            - generic [ref=f7e19]: Vendedor
+          - generic [ref=f7e20]: expand_more
+  - complementary [ref=f7e21]:
+    - generic [ref=f7e26]:
+      - img "Tenté" [ref=f7e28]
+      - generic [ref=f7e29]: Módulos
+      - list [ref=f7e30]:
+        - link "Inicio" [ref=f7e31] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f7e32]: dashboard
+        - link "Nueva venta" [ref=f7e36] [cursor=pointer]:
+          - /url: /ventas/nueva
+          - generic [ref=f7e37]: point_of_sale
+        - link "Ventas" [ref=f7e41] [cursor=pointer]:
+          - /url: /ventas
+          - generic [ref=f7e42]: receipt_long
+        - link "Cocina" [ref=f7e46] [cursor=pointer]:
+          - /url: /cocina
+          - generic [ref=f7e47]: soup_kitchen
+        - link "Clientes" [ref=f7e51] [cursor=pointer]:
+          - /url: /clientes
+          - generic [ref=f7e52]: groups
+        - link "Productos" [ref=f7e56] [cursor=pointer]:
+          - /url: /productos
+          - generic [ref=f7e57]: lunch_dining
+      - generic [ref=f7e61]:
+        - generic [ref=f7e62]: Tenté v1.0.0
+        - generic [ref=f7e63]: © 2026 Tenté · Sabor y Sazón
+      - button "Salir" [ref=f7e64] [cursor=pointer]:
+        - generic [ref=f7e65]: logout
+  - main [ref=f7e70]:
+    - generic [ref=f7e71]:
+      - generic [ref=f7e73]:
+        - generic [ref=f7e74]:
+          - generic [ref=f7e75]:
+            - generic [ref=f7e78]:
+              - generic [ref=f7e79]: search
+              - textbox [ref=f7e82]:
+                - /placeholder: Buscar plato
+            - button [ref=f7e84] [cursor=pointer]:
+              - img [ref=f7e221]: refresh
+          - generic [ref=f7e88]:
+            - button "TODOS" [ref=f7e89] [cursor=pointer]
+            - button "POLLO" [ref=f7e222] [cursor=pointer]
+            - button "SALCHIPAPAS" [ref=f7e224] [cursor=pointer]
+            - button "HAMBURGUESAS" [ref=f7e226] [cursor=pointer]
+            - button "PIQUES" [ref=f7e228] [cursor=pointer]
+        - separator [ref=f7e91]
+        - generic [ref=f7e230]:
+          - generic [ref=f7e231] [cursor=pointer]:
+            - img "ALITAS DE POLLO" [ref=f7e233]
+            - generic [ref=f7e234]:
+              - generic [ref=f7e235]: ALITAS DE POLLO
+              - generic [ref=f7e236]: Bs 30.00
+          - generic [ref=f7e237] [cursor=pointer]:
+            - img "SALCHIPAPA CHICA" [ref=f7e239]
+            - generic [ref=f7e240]:
+              - generic [ref=f7e241]: SALCHIPAPA CHICA
+              - generic [ref=f7e242]: Bs 15.00
+          - generic [ref=f7e243] [cursor=pointer]:
+            - img "SALCHIPAPA GRANDE" [ref=f7e245]
+            - generic [ref=f7e246]:
+              - generic [ref=f7e247]: SALCHIPAPA GRANDE
+              - generic [ref=f7e248]: Bs 20.00
+          - generic [ref=f7e249] [cursor=pointer]:
+            - img "HAMBURGUESA SIMPLE" [ref=f7e251]
+            - generic [ref=f7e252]:
+              - generic [ref=f7e253]: HAMBURGUESA SIMPLE
+              - generic [ref=f7e254]: Bs 15.00
+          - generic [ref=f7e255] [cursor=pointer]:
+            - img "HAMBURGUESA DOBLE" [ref=f7e257]
+            - generic [ref=f7e258]:
+              - generic [ref=f7e259]: HAMBURGUESA DOBLE
+              - generic [ref=f7e260]: Bs 20.00
+          - generic [ref=f7e261] [cursor=pointer]:
+            - img "HAMBURGUESA ESPECIAL" [ref=f7e263]
+            - generic [ref=f7e264]:
+              - generic [ref=f7e265]: HAMBURGUESA ESPECIAL
+              - generic [ref=f7e266]: Bs 25.00
+          - generic [ref=f7e267] [cursor=pointer]:
+            - img "PIQUE CHICO" [ref=f7e269]
+            - generic [ref=f7e270]:
+              - generic [ref=f7e271]: PIQUE CHICO
+              - generic [ref=f7e272]: Bs 25.00
+          - generic [ref=f7e273] [cursor=pointer]:
+            - img "PIQUE GRANDE" [ref=f7e275]
+            - generic [ref=f7e276]:
+              - generic [ref=f7e277]: PIQUE GRANDE
+              - generic [ref=f7e278]: Bs 30.00
+          - generic [ref=f7e279] [cursor=pointer]:
+            - img "SALCHIAMBURGUESA" [ref=f7e281]
+            - generic [ref=f7e282]:
+              - generic [ref=f7e283]: SALCHIAMBURGUESA
+              - generic [ref=f7e284]: Bs 20.00
+          - generic [ref=f7e285] [cursor=pointer]:
+            - img "PIQUE BURGUER" [ref=f7e287]
+            - generic [ref=f7e288]:
+              - generic [ref=f7e289]: PIQUE BURGUER
+              - generic [ref=f7e290]: Bs 30.00
+      - generic [ref=f7e94]:
+        - tablist [ref=f7e95]:
+          - generic [ref=f7e96]:
+            - tab "Pedido 1" [selected] [ref=f7e97] [cursor=pointer]
+            - tab "Pedido 2" [ref=f7e101] [cursor=pointer]
+            - tab "Pedido 3" [ref=f7e105] [cursor=pointer]
+            - tab "Pedido 4" [ref=f7e109] [cursor=pointer]
+            - tab "Pedido 5" [ref=f7e113] [cursor=pointer]
+        - generic [ref=f7e117]:
+          - generic [ref=f7e118]:
+            - button "En mesa" [pressed] [ref=f7e119] [cursor=pointer]:
+              - generic [ref=f7e120]:
+                - img [ref=f7e121]: restaurant
+                - generic [ref=f7e122]: En mesa
+            - button "Para llevar" [ref=f7e123] [cursor=pointer]:
+              - generic [ref=f7e124]:
+                - img [ref=f7e125]: takeout_dining
+                - generic [ref=f7e126]: Para llevar
+          - generic [ref=f7e127]:
+            - generic [ref=f7e130]:
+              - generic [ref=f7e131]:
+                - generic: Cliente registrado
+                - combobox "Cliente registrado" [ref=f7e133]
+              - generic [ref=f7e134]: arrow_drop_down
+            - button [ref=f7e137] [cursor=pointer]:
+              - img [ref=f7e139]: person_add
+          - generic [ref=f7e142]:
+            - generic [ref=f7e143]: record_voice_over
+            - generic [ref=f7e145]:
+              - generic: Nombre para llamar el pedido (opcional)
+              - textbox "Nombre para llamar el pedido (opcional)" [ref=f7e146]: LUIS
+        - separator [ref=f7e147]
+        - list [ref=f7e148]:
+          - listitem [ref=f7e149]:
+            - generic [ref=f7e150]:
+              - generic [ref=f7e151]: touch_app
+              - text: Toca un plato del menú para agregarlo
+        - separator [ref=f7e152]
+        - generic [ref=f7e153]:
+          - generic [ref=f7e154]:
+            - generic [ref=f7e158]:
+              - generic: Descuento Bs
+              - spinbutton "Descuento Bs" [ref=f7e159]: "0"
+            - generic [ref=f7e163]:
+              - generic: Observación
+              - textbox "Observación" [ref=f7e164]
+          - generic [ref=f7e165]:
+            - generic [ref=f7e166]: TOTAL
+            - generic [ref=f7e167]: Bs 0.00
+          - generic [ref=f7e168]:
+            - button "Efectivo" [pressed] [ref=f7e169] [cursor=pointer]:
+              - generic [ref=f7e170]:
+                - img [ref=f7e171]: payments
+                - generic [ref=f7e172]: Efectivo
+            - button "QR" [ref=f7e173] [cursor=pointer]:
+              - generic [ref=f7e174]:
+                - img [ref=f7e175]: qr_code_2
+                - generic [ref=f7e176]: QR
+            - button "Mixto" [ref=f7e177] [cursor=pointer]:
+              - generic [ref=f7e178]:
+                - img [ref=f7e179]: account_balance_wallet
+                - generic [ref=f7e180]: Mixto
+          - generic [ref=f7e181]:
+            - generic [ref=f7e185]:
+              - generic: Recibido Bs
+              - spinbutton "Recibido Bs" [ref=f7e186]: "100"
+            - generic [ref=f7e187]:
+              - generic [ref=f7e188]: Cambio
+              - generic [ref=f7e189]: Bs 100.00
+            - generic [ref=f7e190]:
+              - button "10" [ref=f7e191] [cursor=pointer]
+              - button "20" [ref=f7e194] [cursor=pointer]
+              - button "50" [ref=f7e197] [cursor=pointer]
+              - button "100" [ref=f7e200] [cursor=pointer]
+              - button "200" [ref=f7e203] [cursor=pointer]
+              - button "Exacto" [ref=f7e206] [cursor=pointer]
+          - generic [ref=f7e209]:
+            - button "Vaciar" [disabled] [ref=f7e211]:
+              - generic [ref=f7e212]:
+                - img [ref=f7e213]: delete_sweep
+                - generic [ref=f7e214]: Vaciar
+            - button "Cobrar Bs 0.00" [disabled] [ref=f7e216]:
+              - generic [ref=f7e217]:
+                - img [ref=f7e218]: check_circle
+                - generic [ref=f7e219]: Cobrar Bs 0.00

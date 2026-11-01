@@ -1,0 +1,9 @@
+[     852ms] [INFO] [Quasar] Running SPA. @ http://localhost:9001/.quasar/dev-spa/client-entry.js:48
+[     969ms] [INFO] [Quasar] Running SPA. @ http://localhost:9001/.quasar/dev-spa/client-entry.js:48
+[    1488ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:9001/login:0
+[    2238ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8000/api/configuracion:0
+[    2395ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8000/api/configuracion:0
+[    2397ms] AxiosError: Request failed with status code 404
+    at settle (http://localhost:9001/node_modules/.q-cache/dev-spa/vite-spa/deps/axios.js?v=68aab510:1849:14)
+    at XMLHttpRequest.onloadend (http://localhost:9001/node_modules/.q-cache/dev-spa/vite-spa/deps/axios.js?v=68aab510:2242:4)
+[   11518ms] [ERROR] Failed to load resource: the server responded with a status of 422 (Unprocessable Content) @ http://localhost:8000/api/login:0

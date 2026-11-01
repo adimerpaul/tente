@@ -1,0 +1,34 @@
+- generic [ref=f2e1]:
+  - main [ref=f2e5]:
+    - generic [ref=f2e8]:
+      - generic [ref=f2e9]:
+        - img "Tenté" [ref=f2e10]
+        - generic [ref=f2e11]: Tenté · Sabor y Sazón
+      - separator [ref=f2e12]
+      - generic [ref=f2e14]:
+        - generic [ref=f2e15]: Iniciar sesión
+        - generic [ref=f2e16]: Accede al panel usando tus credenciales.
+        - generic [ref=f2e17]: Nombre de usuario
+        - generic [ref=f2e20]:
+          - generic [ref=f2e21]: account_circle
+          - textbox [ref=f2e24]:
+            - /placeholder: Nombre de usuario
+            - text: vendedor
+        - generic [ref=f2e26]: Contraseña
+        - generic [ref=f2e29]:
+          - generic [ref=f2e30]: lock
+          - textbox [ref=f2e33]:
+            - /placeholder: Contraseña
+            - text: vendedor
+          - generic [ref=f2e34]: visibility_off
+        - button "Iniciar sesión" [active] [ref=f2e37] [cursor=pointer]
+      - generic [ref=f2e40]:
+        - separator [ref=f2e41]
+        - generic [ref=f2e42]: © 2026 Tenté. Todos los derechos reservados.
+  - alert [ref=f2e43]:
+    - generic [ref=f2e44]:
+      - generic [ref=f2e45]:
+        - img [ref=f2e46]: error
+        - generic [ref=f2e47]: El campo email es obligatorio.
+      - button [ref=f2e50] [cursor=pointer]:
+        - img [ref=f2e52]: close

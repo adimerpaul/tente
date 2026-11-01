@@ -1,0 +1,49 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e43]:
+    - banner [ref=f8e44]:
+      - toolbar [ref=f8e45]:
+        - button "Menu" [ref=f8e46] [cursor=pointer]:
+          - img [ref=f8e48]: keyboard_double_arrow_left
+        - generic [ref=f8e49]: Tenté
+        - button "Expandir" [ref=f8e51] [cursor=pointer]:
+          - generic [ref=f8e52]:
+            - generic [ref=f8e57]:
+              - generic [ref=f8e58]: cocinero
+              - generic [ref=f8e59]: Cocinero
+            - generic [ref=f8e60]: expand_more
+    - complementary [ref=f8e61]:
+      - generic [ref=f8e66]:
+        - img "Tenté" [ref=f8e68]
+        - generic [ref=f8e69]: Módulos
+        - list [ref=f8e70]:
+          - link "Inicio" [ref=f8e71] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f8e72]: dashboard
+          - link "Cocina" [ref=f8e76] [cursor=pointer]:
+            - /url: /cocina
+            - generic [ref=f8e77]: soup_kitchen
+          - link "Productos" [ref=f8e81] [cursor=pointer]:
+            - /url: /productos
+            - generic [ref=f8e82]: lunch_dining
+        - generic [ref=f8e86]:
+          - generic [ref=f8e87]: Tenté v1.0.0
+          - generic [ref=f8e88]: © 2026 Tenté · Sabor y Sazón
+        - button "Salir" [ref=f8e89] [cursor=pointer]:
+          - generic [ref=f8e90]: logout
+    - main [ref=f8e95]:
+      - generic [ref=f8e97]:
+        - img "Tenté" [ref=f8e98]
+        - generic [ref=f8e99]: Hola, COCINERO TENTÉ
+        - generic [ref=f8e100]: Sabor y Sazón
+        - link "Cocina" [ref=f8e102] [cursor=pointer]:
+          - /url: /cocina
+          - generic [ref=f8e103]:
+            - img [ref=f8e104]: soup_kitchen
+            - generic [ref=f8e105]: Cocina
+  - alert [ref=f8e106]:
+    - generic [ref=f8e107]:
+      - generic [ref=f8e108]:
+        - img [ref=f8e109]: check_circle
+        - generic [ref=f8e110]: Bienvenido COCINERO TENTÉ
+      - button [ref=f8e113] [cursor=pointer]:
+        - img [ref=f8e115]: close

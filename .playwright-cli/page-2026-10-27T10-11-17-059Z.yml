@@ -1,0 +1,78 @@
+- generic [ref=f9e3]:
+  - banner [ref=f9e4]:
+    - toolbar [ref=f9e5]:
+      - button "Menu" [ref=f9e6] [cursor=pointer]:
+        - img [ref=f9e8]: keyboard_double_arrow_left
+      - generic [ref=f9e9]: Tenté
+      - button "Expandir" [ref=f9e11] [cursor=pointer]:
+        - generic [ref=f9e12]:
+          - generic [ref=f9e17]:
+            - generic [ref=f9e18]: cocinero
+            - generic [ref=f9e19]: Cocinero
+          - generic [ref=f9e20]: expand_more
+  - complementary [ref=f9e21]:
+    - generic [ref=f9e26]:
+      - img "Tenté" [ref=f9e28]
+      - generic [ref=f9e29]: Módulos
+      - list [ref=f9e30]:
+        - link "Inicio" [ref=f9e31] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f9e32]: dashboard
+        - link "Cocina" [ref=f9e36] [cursor=pointer]:
+          - /url: /cocina
+          - generic [ref=f9e37]: soup_kitchen
+        - link "Productos" [ref=f9e41] [cursor=pointer]:
+          - /url: /productos
+          - generic [ref=f9e42]: lunch_dining
+      - generic [ref=f9e46]:
+        - generic [ref=f9e47]: Tenté v1.0.0
+        - generic [ref=f9e48]: © 2026 Tenté · Sabor y Sazón
+      - button "Salir" [ref=f9e49] [cursor=pointer]:
+        - generic [ref=f9e50]: logout
+  - main [ref=f9e55]:
+    - generic [ref=f9e56]:
+      - generic [ref=f9e57]:
+        - generic [ref=f9e58]: Cocina
+        - generic [ref=f9e59]: Pedidos de hoy · se actualiza cada 8 s
+      - switch "Sonido" [checked] [ref=f9e60] [cursor=pointer]:
+        - generic [ref=f9e61]: volume_up
+      - button [ref=f9e66]:
+        - generic:
+          - img: refresh
+    - generic [ref=f9e70]:
+      - generic [ref=f9e71]:
+        - generic [ref=f9e72]:
+          - generic [ref=f9e73]: notifications_active
+          - text: Pendientes
+          - status "1" [ref=f9e74]
+        - generic [ref=f9e76]:
+          - generic [ref=f9e77]:
+            - generic [ref=f9e78]:
+              - generic [ref=f9e79]: "#1"
+              - generic [ref=f9e80]:
+                - generic [ref=f9e81]: LUIS
+                - generic [ref=f9e82]: 06:10 a. m. · hace 0 min
+              - generic [ref=f9e83]:
+                - generic [ref=f9e84]: restaurant
+                - generic [ref=f9e85]: MESA
+            - separator [ref=f9e87]
+            - generic [ref=f9e88]:
+              - text: 2× HAMBURGUESA ESPECIAL
+              - generic [ref=f9e89]: » SIN CEBOLLA
+            - generic [ref=f9e90]: 1× PIQUE GRANDE
+          - button "Preparar" [ref=f9e92] [cursor=pointer]:
+            - generic [ref=f9e93]:
+              - img [ref=f9e94]: local_fire_department
+              - generic [ref=f9e95]: Preparar
+      - generic [ref=f9e96]:
+        - generic [ref=f9e97]:
+          - generic [ref=f9e98]: outdoor_grill
+          - text: En preparación
+          - status "0" [ref=f9e99]
+        - generic [ref=f9e100]: Sin pedidos
+      - generic [ref=f9e102]:
+        - generic [ref=f9e103]:
+          - generic [ref=f9e104]: room_service
+          - text: Listos para entregar
+          - status "0" [ref=f9e105]
+        - generic [ref=f9e106]: Sin pedidos

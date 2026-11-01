@@ -1,0 +1,14 @@
+[     368ms] [INFO] [Quasar] Running SPA. @ http://localhost:9001/.quasar/dev-spa/client-entry.js:48
+[     534ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:9001/login:0
+[     865ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8000/api/configuracion:0
+[    1250ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8000/api/configuracion:0
+[    1252ms] AxiosError: Request failed with status code 404
+    at settle (http://localhost:9001/node_modules/.q-cache/dev-spa/vite-spa/deps/axios.js?v=68aab510:1849:14)
+    at XMLHttpRequest.onloadend (http://localhost:9001/node_modules/.q-cache/dev-spa/vite-spa/deps/axios.js?v=68aab510:2242:4)
+[   23884ms] [INFO] [Quasar] Running SPA. @ http://localhost:9001/.quasar/dev-spa/client-entry.js?t=1793095748254:48
+[   24034ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:9001/login:0
+[   24244ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8000/api/configuracion:0
+[   24868ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8000/api/configuracion:0
+[   24869ms] AxiosError: Request failed with status code 404
+    at settle (http://localhost:9001/node_modules/.q-cache/dev-spa/vite-spa/deps/axios.js?v=68aab510:1849:14)
+    at XMLHttpRequest.onloadend (http://localhost:9001/node_modules/.q-cache/dev-spa/vite-spa/deps/axios.js?v=68aab510:2242:4)

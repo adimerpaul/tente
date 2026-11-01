@@ -1,0 +1,2 @@
+[     393ms] [INFO] [Quasar] Running SPA. @ http://localhost:9050/.quasar/dev-spa/client-entry.js:48
+[     584ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:9050/login:0

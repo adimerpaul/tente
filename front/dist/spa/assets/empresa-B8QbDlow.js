@@ -1,0 +1,1 @@
+function e(){try{return JSON.parse(localStorage.getItem(`empresaTente`)||`{}`)}catch{return{}}}export{e as t};
