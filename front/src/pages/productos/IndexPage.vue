@@ -7,7 +7,7 @@
     <q-card flat bordered>
       <q-card-section class="row q-col-gutter-sm q-pa-sm items-center">
         <q-input v-model="search" dense outlined debounce="300" clearable placeholder="Buscar nombre o código" class="col-12 col-sm-5"><template #prepend><q-icon name="search"/></template></q-input>
-        <div class="col row q-gutter-xs"><q-chip v-for="c in categories" :key="c" clickable dense :color="category===c?'primary':'grey-3'" :text-color="category===c?'white':'grey-9'" @click="category=c">{{c}}</q-chip></div>
+        <div class="col row q-gutter-xs"><q-chip v-for="c in categories" :key="c" clickable dense :icon="categoriaIcon(c)" :color="category===c?'primary':'grey-3'" :text-color="category===c?'white':'grey-9'" @click="category=c">{{c}}</q-chip></div>
       </q-card-section>
       <q-separator/>
       <q-card-section class="q-pa-sm">
@@ -59,6 +59,7 @@
 
 <script setup>
 import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue'
+import { categoriaIcon } from '../../addons/categoriaIcon'
 const { proxy }=getCurrentInstance()
 const rows=ref([]),loading=ref(false),saving=ref(false),dialog=ref(false),search=ref(''),category=ref('TODOS'),photoFile=ref(null),photoInput=ref(null),photoTarget=ref(null)
 const empty=()=>({id:null,codigo:'',nombre:'',categoria:'',precio_venta:0,descripcion:'',orden:null,disponible:true}),form=reactive(empty())

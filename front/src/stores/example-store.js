@@ -4,7 +4,7 @@ import { defineStore, acceptHMRUpdate } from 'pinia'
 // Viven en el store (no en la página) para no perderse al cambiar de pantalla.
 export const CART_COUNT = 5
 
-const emptyCart = () => ({ items: [], descuento: 0, observacion: '', cliente: null, cliente_nombre: '', tipo_consumo: 'MESA' })
+const emptyCart = () => ({ items: [], descuento: 0, observacion: '', cliente: null, cliente_nombre: '', tipo_consumo: 'LLEVAR' })
 
 export const useCounterStore = defineStore('counter', {
   state: () => ({

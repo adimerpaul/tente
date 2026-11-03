@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\Movimiento;
 use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
+use App\Support\CocinaSocket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -30,13 +32,20 @@ class VentaController extends Controller
     {
         $this->authorizeAction($request, 'Ver Ventas');
         $query = $this->filteredQuery($request)->where('estado', 'COMPLETADA');
+        // Ingresos y egresos del mismo rango y usuario: cierre = ventas + ingresos - egresos.
+        $mov = MovimientoController::totales(fn () => MovimientoController::filtered(Movimiento::query(), $request));
+        $efectivo = (float) (clone $query)->sum('monto_efectivo');
+        $total = (float) (clone $query)->sum('total');
 
         return response()->json([
-            'efectivo' => (clone $query)->sum('monto_efectivo'),
-            'qr' => (clone $query)->sum('monto_qr'),
-            'total' => (clone $query)->sum('total'),
-            'descuento' => (clone $query)->sum('descuento'),
+            'efectivo' => $efectivo,
+            'qr' => (float) (clone $query)->sum('monto_qr'),
+            'total' => $total,
+            'descuento' => (float) (clone $query)->sum('descuento'),
             'cantidad' => (clone $query)->count(),
+            ...$mov,
+            'neto' => round($total + $mov['ingresos'] - $mov['egresos'], 2),
+            'caja_efectivo' => round($efectivo + $mov['ingresos_efectivo'] - $mov['egresos_efectivo'], 2),
             'usuarios' => User::orderBy('name')->get(['id', 'name']),
         ]);
     }
@@ -54,7 +63,7 @@ class VentaController extends Controller
         $data = $request->validate([
             'cliente_id' => ['nullable', 'integer', Rule::exists('clientes', 'id')->whereNull('deleted_at')],
             'cliente_nombre' => ['nullable', 'string', 'max:255'],
-            'tipo_consumo' => ['nullable', 'in:MESA,LLEVAR'],
+            'tipo_consumo' => ['nullable', 'in:MESA,LLEVAR'], // Se acepta por compatibilidad; todo se vende para llevar (cajitas).
             'descuento' => ['nullable', 'numeric', 'min:0'],
             'tipo_pago' => ['required', 'in:EFECTIVO,QR,COMBINADO'],
             'monto_efectivo' => ['nullable', 'numeric', 'min:0'],
@@ -86,9 +95,17 @@ class VentaController extends Controller
             $qr = $data['tipo_pago'] === 'QR' ? $total : round((float) ($data['monto_qr'] ?? 0), 2);
             abort_if(abs(($cash + $qr) - $total) > 0.009, 422, 'Los montos de efectivo y QR deben sumar el total de la venta');
 
-            // Con cliente registrado se copia su nombre; sin él, el nombre escrito (para llamar el pedido) o SIN NOMBRE.
-            $cliente = Cliente::find($data['cliente_id'] ?? Cliente::SIN_NOMBRE);
+            // Con cliente elegido se copia su nombre. Si sólo se escribió un nombre, se busca un cliente
+            // con ese nombre y, si no existe, se registra en el momento. Sin nombre: cliente genérico.
             $nombreLibre = mb_strtoupper(trim((string) ($data['cliente_nombre'] ?? '')));
+            if (! empty($data['cliente_id'])) {
+                $cliente = Cliente::find($data['cliente_id']);
+            } elseif ($nombreLibre !== '' && $nombreLibre !== 'SIN NOMBRE') {
+                $cliente = Cliente::where('nombre', $nombreLibre)->where('id', '!=', Cliente::SIN_NOMBRE)->orderBy('id')->first()
+                    ?? Cliente::create(['nombre' => $nombreLibre]);
+            } else {
+                $cliente = Cliente::find(Cliente::SIN_NOMBRE);
+            }
             $esGenerico = ! $cliente || $cliente->id === Cliente::SIN_NOMBRE;
 
             // Número de pedido del día: el cocinero y el cliente se guían por él.
@@ -101,7 +118,7 @@ class VentaController extends Controller
                 'cliente_id' => $cliente?->id,
                 'cliente_nombre' => $esGenerico ? ($nombreLibre ?: 'SIN NOMBRE') : $cliente->nombre,
                 'cliente_documento' => $esGenerico ? null : $cliente->documento,
-                'tipo_consumo' => $data['tipo_consumo'] ?? 'MESA',
+                'tipo_consumo' => 'LLEVAR',
                 'subtotal' => $subtotal,
                 'descuento' => $discount,
                 'total' => $total,
@@ -142,7 +159,10 @@ class VentaController extends Controller
             return $sale;
         });
 
-        return response()->json($venta->load('detalles'), 201);
+        $venta->load('detalles');
+        CocinaSocket::emit('NUEVO', $venta);
+
+        return response()->json($venta, 201);
     }
 
     public function cancel(Request $request, Venta $venta)
@@ -150,6 +170,7 @@ class VentaController extends Controller
         $this->authorizeAction($request, 'Anular Ventas');
         abort_if($venta->estado === 'ANULADA', 422, 'La venta ya está anulada');
         $venta->update(['estado' => 'ANULADA', 'cocina_actualizado_at' => now()]);
+        CocinaSocket::emit('ANULADO', $venta);
 
         return response()->json($venta->fresh());
     }
@@ -179,6 +200,7 @@ class VentaController extends Controller
         $data = $request->validate(['estado_cocina' => ['required', Rule::in(Venta::ESTADOS_COCINA)]]);
         abort_if($venta->estado === 'ANULADA', 422, 'El pedido fue anulado');
         $venta->update(['estado_cocina' => $data['estado_cocina'], 'cocina_actualizado_at' => now()]);
+        CocinaSocket::emit($data['estado_cocina'], $venta);
 
         return response()->json($venta->fresh('detalles'));
     }

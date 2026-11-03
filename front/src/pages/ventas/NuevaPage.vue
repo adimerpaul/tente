@@ -10,7 +10,7 @@
               <div class="col-auto"><q-btn dense flat round icon="refresh" color="primary" :loading="loading" @click="loadProducts"><q-tooltip>Actualizar menú</q-tooltip></q-btn></div>
             </div>
             <div class="row q-gutter-xs q-mt-xs">
-              <q-chip v-for="c in categories" :key="c" clickable dense :color="category===c?'primary':'grey-3'" :text-color="category===c?'white':'grey-9'" @click="category=c">{{c}}</q-chip>
+              <q-chip v-for="c in categories" :key="c" clickable :icon="categoriaIcon(c)" :color="category===c?'primary':'grey-3'" :text-color="category===c?'white':'grey-9'" @click="category=c">{{c}}<q-badge rounded class="q-ml-xs" :color="category===c?'white':'grey-5'" :text-color="category===c?'primary':'white'" :label="categoryCount(c)"/></q-chip>
             </div>
           </q-card-section>
           <q-separator/>
@@ -34,16 +34,12 @@
             <q-tab v-for="(c,i) in $store.carts" :key="i" :name="i" class="q-px-xs"><div class="text-caption text-weight-bold">Pedido {{i+1}}</div><div v-if="c.items.length" style="font-size:10px">Bs {{money($store.cartTotal(i))}}</div></q-tab>
           </q-tabs>
           <q-card-section class="q-pa-sm">
-            <q-btn-toggle v-model="cart.tipo_consumo" spread no-caps unelevated toggle-color="primary" color="grey-2" text-color="grey-9" class="q-mb-sm"
-              :options="[{label:'En mesa',value:'MESA',icon:'restaurant'},{label:'Para llevar',value:'LLEVAR',icon:'takeout_dining'}]"/>
-            <div class="row q-col-gutter-xs items-center">
-              <q-select v-model="cart.cliente" class="col" dense outlined use-input clearable input-debounce="300" label="Cliente registrado" :options="clientOptions" option-label="nombre" @filter="filterClients">
-                <template #option="s"><q-item v-bind="s.itemProps"><q-item-section><q-item-label>{{s.opt.nombre}}</q-item-label><q-item-label caption>{{s.opt.documento||'Sin documento'}}{{s.opt.celular?' · '+s.opt.celular:''}}</q-item-label></q-item-section></q-item></template>
-                <template #no-option><q-item><q-item-section class="text-grey">Sin resultados</q-item-section></q-item></template>
-              </q-select>
-              <div class="col-auto"><q-btn v-if="can('Crear Clientes')" dense unelevated color="primary" icon="person_add" @click="clientDialog=true"><q-tooltip>Nuevo cliente</q-tooltip></q-btn></div>
-            </div>
-            <q-input v-if="!cart.cliente" v-model="cart.cliente_nombre" v-uppercase dense outlined class="q-mt-xs" label="Nombre para llamar el pedido (opcional)"><template #prepend><q-icon name="record_voice_over" size="18px"/></template></q-input>
+            <q-select :model-value="cart.cliente_nombre" dense outlined use-input hide-selected fill-input clearable input-debounce="300" input-class="text-uppercase" label="Cliente (nombre para llamar el pedido)"
+              :options="clientOptions" option-label="nombre" @filter="filterClients" @input-value="setClientName" @update:model-value="pickClient">
+              <template #prepend><q-icon :name="cart.cliente?'how_to_reg':'person_add'" :color="cart.cliente?'positive':'grey-6'" size="20px"><q-tooltip>{{cart.cliente?'Cliente registrado':'Si no existe, se registra al cobrar'}}</q-tooltip></q-icon></template>
+              <template #option="s"><q-item v-bind="s.itemProps"><q-item-section><q-item-label>{{s.opt.nombre}}</q-item-label><q-item-label v-if="s.opt.documento||s.opt.celular" caption>{{[s.opt.documento,s.opt.celular].filter(Boolean).join(' · ')}}</q-item-label></q-item-section></q-item></template>
+              <template #no-option="{inputValue}"><q-item v-if="inputValue"><q-item-section class="text-grey-7">Cliente nuevo: «{{inputValue.toUpperCase()}}» se registra al cobrar</q-item-section></q-item></template>
+            </q-select>
           </q-card-section>
           <q-separator/>
           <q-list separator class="order-items">
@@ -86,33 +82,20 @@
         </q-card>
       </div>
     </div>
-
-    <q-dialog v-model="clientDialog">
-      <q-card style="width:420px;max-width:95vw">
-        <q-form @submit="saveClient">
-          <q-card-section class="row items-center q-py-sm bg-orange-1"><q-icon name="person_add" color="primary" size="22px" class="q-mr-sm"/><div class="text-subtitle1 text-weight-bold">Nuevo cliente</div><q-space/><q-btn flat round dense icon="close" v-close-popup/></q-card-section>
-          <q-card-section class="q-gutter-sm">
-            <q-input v-model="client.nombre" v-uppercase dense outlined autofocus label="Nombre *" :rules="[v=>!!v||'Campo requerido']" hide-bottom-space/>
-            <q-input v-model="client.documento" dense outlined label="CI / NIT"/>
-            <q-input v-model="client.celular" dense outlined label="Celular"/>
-          </q-card-section>
-          <q-card-actions align="right"><q-btn flat no-caps label="Cancelar" v-close-popup/><q-btn unelevated no-caps color="primary" icon="save" label="Guardar" type="submit" :loading="savingClient"/></q-card-actions>
-        </q-form>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
 <script setup>
-import { computed, getCurrentInstance, onMounted, reactive, ref, watch } from 'vue'
+import { computed, getCurrentInstance, onMounted, ref, watch } from 'vue'
 import { printKitchen, printSale } from '../../addons/ventaPrint'
+import { categoriaIcon } from '../../addons/categoriaIcon'
 const { proxy } = getCurrentInstance()
 const products=ref([]),loading=ref(false),saving=ref(false),search=ref(''),category=ref('TODOS'),tipoPago=ref('EFECTIVO'),recibido=ref(null),efectivo=ref(null)
-const clientOptions=ref([]),clientDialog=ref(false),savingClient=ref(false),client=reactive({nombre:'',documento:'',celular:''})
-const money=v=>Number(v||0).toFixed(2),can=p=>proxy.$store.hasPermission(p),photo=f=>`${proxy.$imgBase}/images/${f}`
+const clientOptions=ref([])
+const money=v=>Number(v||0).toFixed(2),photo=f=>`${proxy.$imgBase}/images/${f}`
 const activeCart=computed({get:()=>proxy.$store.activeCart,set:v=>proxy.$store.setActiveCart(v)}),cart=computed(()=>proxy.$store.currentCart)
 const total=computed(()=>proxy.$store.cartTotal(proxy.$store.activeCart)),cambio=computed(()=>(Number(recibido.value)||0)-total.value)
-const categories=computed(()=>['TODOS',...new Set(products.value.map(p=>p.categoria).filter(Boolean))])
+const categories=computed(()=>['TODOS',...new Set(products.value.map(p=>p.categoria).filter(Boolean))]),categoryCount=c=>c==='TODOS'?products.value.length:products.value.filter(p=>p.categoria===c).length
 const visibleProducts=computed(()=>{const q=(search.value||'').toUpperCase();return products.value.filter(p=>(category.value==='TODOS'||p.categoria===category.value)&&(!q||p.nombre.includes(q)||p.codigo.includes(q)))})
 const qtyInCart=id=>cart.value.items.filter(i=>i.producto_id===id).reduce((s,i)=>s+i.cantidad,0)
 watch(activeCart,()=>{recibido.value=null;efectivo.value=null})
@@ -122,7 +105,9 @@ function add(p){const line=cart.value.items.find(i=>i.producto_id===p.id&&!i.obs
 function decrease(index){const item=cart.value.items[index];if(item.cantidad>1)item.cantidad--;else cart.value.items.splice(index,1)}
 function clearCart(){proxy.$alert.dialog('¿Vaciar este pedido?').onOk(()=>proxy.$store.resetCart())}
 function filterClients(val,update){proxy.$axios.get('/clientes',{params:{q:val,per_page:20}}).then(r=>update(()=>{clientOptions.value=r.data.data.filter(c=>c.id!==1)})).catch(()=>update(()=>{clientOptions.value=[]}))}
-async function saveClient(){savingClient.value=true;try{const{data}=await proxy.$axios.post('/clientes',client);cart.value.cliente=data;Object.assign(client,{nombre:'',documento:'',celular:''});clientDialog.value=false;proxy.$alert.success('Cliente registrado')}catch(e){proxy.$alert.error(Object.values(e.response?.data?.errors||{})[0]?.[0]||e.response?.data?.message||'No se pudo guardar')}finally{savingClient.value=false}}
+// Un solo campo: se elige un cliente existente o se escribe un nombre nuevo, que el backend busca o registra al cobrar.
+function setClientName(v){cart.value.cliente_nombre=v||'';if(cart.value.cliente&&cart.value.cliente.nombre!==(v||'').trim().toUpperCase())cart.value.cliente=null}
+function pickClient(c){if(c&&typeof c==='object'){cart.value.cliente=c;cart.value.cliente_nombre=c.nombre}else{cart.value.cliente=null;cart.value.cliente_nombre=c||''}}
 async function checkout(){
   const discount=Number(cart.value.descuento)||0
   if(discount<0)return proxy.$alert.error('El descuento no puede ser negativo')
@@ -130,7 +115,7 @@ async function checkout(){
   const cash=tipoPago.value==='COMBINADO'?Math.min(Number(efectivo.value)||0,total.value):null
   saving.value=true
   try{
-    const {data}=await proxy.$axios.post('/ventas',{cliente_id:cart.value.cliente?.id||null,cliente_nombre:cart.value.cliente?null:cart.value.cliente_nombre,tipo_consumo:cart.value.tipo_consumo,descuento:discount,observacion:cart.value.observacion,tipo_pago:tipoPago.value,monto_efectivo:cash,monto_qr:cash===null?null:Math.round((total.value-cash)*100)/100,detalles:cart.value.items.map(i=>({producto_id:i.producto_id,cantidad:i.cantidad,observacion:i.observacion||null}))})
+    const {data}=await proxy.$axios.post('/ventas',{cliente_id:cart.value.cliente?.id||null,cliente_nombre:cart.value.cliente?null:(cart.value.cliente_nombre||'').trim()||null,tipo_consumo:'LLEVAR',descuento:discount,observacion:cart.value.observacion,tipo_pago:tipoPago.value,monto_efectivo:cash,monto_qr:cash===null?null:Math.round((total.value-cash)*100)/100,detalles:cart.value.items.map(i=>({producto_id:i.producto_id,cantidad:i.cantidad,observacion:i.observacion||null}))})
     if(tipoPago.value==='EFECTIVO'&&recibido.value)data.recibido=Number(recibido.value)
     proxy.$store.resetCart();recibido.value=null;efectivo.value=null;tipoPago.value='EFECTIVO'
     proxy.$alert.choose(`Pedido #${data.ticket} registrado`,`${data.numero} · Total Bs ${money(data.total)}${data.recibido?` · Cambio Bs ${money(data.recibido-data.total)}`:''}`,[{label:'Ticket del cliente',value:'cliente'},{label:'Comanda de cocina',value:'cocina'}],['cliente','cocina'],'Imprimir','No imprimir')

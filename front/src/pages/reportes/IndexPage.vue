@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-sm">
     <div class="row items-center q-mb-sm q-col-gutter-sm">
-      <div class="col-12 col-md"><div class="text-subtitle1 text-weight-bold">Reportes de ventas</div><div class="text-caption text-grey-7">Del {{fmt(data.desde)}} al {{fmt(data.hasta)}} · sólo ventas completadas</div></div>
+      <div class="col-12 col-md"><div class="text-subtitle1 text-weight-bold">Reportes de ventas y caja</div><div class="text-caption text-grey-7">Del {{fmt(data.desde)}} al {{fmt(data.hasta)}} · sólo ventas completadas</div></div>
       <div class="col-auto row q-gutter-xs items-center">
         <q-btn-toggle v-model="quick" dense no-caps unelevated toggle-color="primary" color="grey-2" text-color="grey-9" :options="quickOptions" @update:model-value="applyQuick"/>
       </div>
@@ -34,7 +34,7 @@
         <q-card flat bordered class="q-mb-sm"><q-card-section class="q-py-xs q-px-sm card-title">Por vendedor</q-card-section><q-separator/><q-table dense flat :rows="data.por_usuario" :columns="userColumns" row-key="nombre" :rows-per-page-options="[0]" hide-pagination/></q-card>
         <div class="row q-col-gutter-sm">
           <div class="col-6"><q-card flat bordered><q-card-section class="q-py-xs q-px-sm card-title">Forma de pago</q-card-section><q-separator/><q-table dense flat :rows="data.por_pago" :columns="simpleColumns('Pago')" row-key="nombre" :rows-per-page-options="[0]" hide-pagination/></q-card></div>
-          <div class="col-6"><q-card flat bordered><q-card-section class="q-py-xs q-px-sm card-title">Mesa / llevar</q-card-section><q-separator/><q-table dense flat :rows="data.por_consumo" :columns="simpleColumns('Consumo')" row-key="nombre" :rows-per-page-options="[0]" hide-pagination/></q-card></div>
+          <div class="col-6"><q-card flat bordered><q-card-section class="q-py-xs q-px-sm card-title">Ingresos y gastos</q-card-section><q-separator/><q-table dense flat :rows="data.por_categoria_movimiento" :columns="movCatColumns" :row-key="r=>r.tipo+r.nombre" :rows-per-page-options="[0]" hide-pagination no-data-label="Sin movimientos"/></q-card></div>
         </div>
       </div>
       <div class="col-12 col-md-6">
@@ -56,7 +56,7 @@ const { proxy }=getCurrentInstance()
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,today=()=>iso(new Date())
 const from=ref(today()),to=ref(today()),user=ref(null),loading=ref(false),downloading=ref(null),quick=ref('hoy')
 const quickOptions=[{label:'Hoy',value:'hoy'},{label:'Ayer',value:'ayer'},{label:'7 días',value:'semana'},{label:'Este mes',value:'mes'}]
-const data=reactive({desde:today(),hasta:today(),resumen:{},por_producto:[],por_categoria:[],por_usuario:[],por_dia:[],por_hora:[],por_pago:[],por_consumo:[],por_cliente:[],usuarios:[]})
+const data=reactive({desde:today(),hasta:today(),resumen:{},por_producto:[],por_categoria:[],por_usuario:[],por_dia:[],por_hora:[],por_pago:[],por_consumo:[],por_categoria_movimiento:[],movimientos:[],por_cliente:[],usuarios:[]})
 const money=v=>Number(v||0).toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2}),fmt=v=>v?v.split('-').reverse().join('/'):''
 const r=computed(()=>data.resumen||{})
 const kpis=computed(()=>[
@@ -68,18 +68,23 @@ const kpis=computed(()=>[
   {label:'QR',value:`Bs ${money(r.value.qr)}`,icon:'qr_code_2',color:'#1565c0'},
   {label:'Descuentos',value:`Bs ${money(r.value.descuento)}`,icon:'sell',color:'#8e24aa'},
   {label:'Anuladas',value:`${r.value.anuladas||0} · Bs ${money(r.value.total_anulado)}`,icon:'cancel',color:'#757575'},
+  {label:'Otros ingresos',value:`Bs ${money(r.value.ingresos)}`,icon:'south_west',color:'#2e7d32'},
+  {label:'Gastos / egresos',value:`Bs ${money(r.value.egresos)}`,icon:'north_east',color:'#c62828'},
+  {label:'Neto (ventas + ingresos − gastos)',value:`Bs ${money(r.value.neto)}`,icon:'account_balance',color:'#9f2321'},
+  {label:'Efectivo en caja',value:`Bs ${money(r.value.caja_efectivo)}`,icon:'savings',color:'#f6a204'},
 ])
 const share=v=>r.value.total?Number(v)/Number(r.value.total):0
 const maxHour=computed(()=>Math.max(1,...data.por_hora.map(h=>Number(h.total)))),hourShare=v=>Number(v)/maxHour.value
 const productColumns=[{name:'nombre',label:'Producto',field:'nombre',align:'left'},{name:'categoria',label:'Categoría',field:'categoria',align:'left'},{name:'cantidad',label:'Cant.',field:'cantidad',align:'center'},{name:'total',label:'Total',field:'total',format:v=>`Bs ${money(v)}`,align:'right'},{name:'share',label:'% del total',align:'left'}]
 const simpleColumns=label=>[{name:'nombre',label,field:'nombre',align:'left',format:v=>v==='LLEVAR'?'PARA LLEVAR':v==='MESA'?'EN MESA':v},{name:'cantidad',label:'Cant.',field:'cantidad',align:'center'},{name:'total',label:'Total',field:'total',format:v=>`Bs ${money(v)}`,align:'right'}]
 const userColumns=[{name:'nombre',label:'Vendedor',field:'nombre',align:'left'},{name:'cantidad',label:'Pedidos',field:'cantidad',align:'center'},{name:'efectivo',label:'Efectivo',field:'efectivo',format:v=>`Bs ${money(v)}`,align:'right'},{name:'qr',label:'QR',field:'qr',format:v=>`Bs ${money(v)}`,align:'right'},{name:'total',label:'Total',field:'total',format:v=>`Bs ${money(v)}`,align:'right'}]
-const dayColumns=[{name:'dia',label:'Día',field:'dia',format:v=>fmt(String(v).slice(0,10)),align:'left'},{name:'cantidad',label:'Pedidos',field:'cantidad',align:'center'},{name:'efectivo',label:'Efectivo',field:'efectivo',format:v=>`Bs ${money(v)}`,align:'right'},{name:'qr',label:'QR',field:'qr',format:v=>`Bs ${money(v)}`,align:'right'},{name:'total',label:'Total',field:'total',format:v=>`Bs ${money(v)}`,align:'right'}]
+const dayColumns=[{name:'dia',label:'Día',field:'dia',format:v=>fmt(String(v).slice(0,10)),align:'left'},{name:'cantidad',label:'Pedidos',field:'cantidad',align:'center'},{name:'efectivo',label:'Efectivo',field:'efectivo',format:v=>`Bs ${money(v)}`,align:'right'},{name:'qr',label:'QR',field:'qr',format:v=>`Bs ${money(v)}`,align:'right'},{name:'total',label:'Vendido',field:'total',format:v=>`Bs ${money(v)}`,align:'right'},{name:'ingresos',label:'Ingresos',field:'ingresos',format:v=>`Bs ${money(v)}`,align:'right'},{name:'egresos',label:'Gastos',field:'egresos',format:v=>`Bs ${money(v)}`,align:'right'},{name:'neto',label:'Neto',field:'neto',format:v=>`Bs ${money(v)}`,align:'right',classes:'text-weight-bold'}]
+const movCatColumns=[{name:'tipo',label:'Tipo',field:'tipo',align:'left',format:v=>v==='INGRESO'?'+ ING.':'− GASTO',classes:r=>r.tipo==='INGRESO'?'text-positive':'text-negative'},{name:'nombre',label:'Categoría',field:'nombre',align:'left'},{name:'total',label:'Total',field:'total',format:v=>`Bs ${money(v)}`,align:'right'}]
 const clientColumns=[{name:'nombre',label:'Cliente',field:'nombre',align:'left'},{name:'documento',label:'CI/NIT',field:'documento',align:'left'},{name:'cantidad',label:'Pedidos',field:'cantidad',align:'center'},{name:'total',label:'Total',field:'total',format:v=>`Bs ${money(v)}`,align:'right'}]
 const params=()=>({desde:from.value,hasta:to.value,user_id:user.value?.id})
 function applyQuick(v){const d=new Date();if(v==='hoy'){from.value=to.value=iso(d)}else if(v==='ayer'){d.setDate(d.getDate()-1);from.value=to.value=iso(d)}else if(v==='semana'){to.value=iso(d);d.setDate(d.getDate()-6);from.value=iso(d)}else if(v==='mes'){to.value=iso(d);from.value=iso(new Date(d.getFullYear(),d.getMonth(),1))}load()}
 function load(){loading.value=true;proxy.$axios.get('/reportes',{params:params()}).then(res=>Object.assign(data,res.data)).catch(e=>proxy.$alert.error(e.response?.data?.message||'No se pudo cargar el reporte')).finally(()=>loading.value=false)}
-async function download(type){downloading.value=type;try{const res=await proxy.$axios.get(`/reportes-exportar/${type}`,{params:params(),responseType:'blob'});const url=URL.createObjectURL(res.data),a=document.createElement('a');a.href=url;a.download=`reporte_ventas_${from.value}_${to.value}.${type==='excel'?'xlsx':'pdf'}`;a.click();URL.revokeObjectURL(url)}catch{proxy.$alert.error('No se pudo exportar el reporte')}finally{downloading.value=null}}
+async function download(type){downloading.value=type;try{const res=await proxy.$axios.get(`/reportes-exportar/${type}`,{params:params(),responseType:'blob'});const url=URL.createObjectURL(res.data),a=document.createElement('a');a.href=url;a.download=`reporte_ventas_caja_${from.value}_${to.value}.${type==='excel'?'xlsx':'pdf'}`;a.click();URL.revokeObjectURL(url)}catch{proxy.$alert.error('No se pudo exportar el reporte')}finally{downloading.value=null}}
 load()
 </script>
 

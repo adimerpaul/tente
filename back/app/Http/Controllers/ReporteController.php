@@ -30,7 +30,7 @@ class ReporteController extends Controller
     {
         $this->authorizeAction($request, 'Ver Reportes');
 
-        $export = new VentasReporteExport($this->contexto($request), $this->datos($request), $this->ventas($request), $this->detalles($request));
+        $export = new VentasReporteExport($this->contexto($request), $this->datos($request), $this->ventas($request), $this->detalles($request), $this->movimientos($request));
 
         return Excel::download($export, 'reporte_ventas_'.now()->format('Ymd_His').'.xlsx');
     }
@@ -80,6 +80,14 @@ class ReporteController extends Controller
             ->when($request->integer('user_id'), fn ($q, $id) => $q->where('user_id', $id));
     }
 
+    private function movimientosQuery(Request $request)
+    {
+        [$from, $to] = $this->rango($request);
+
+        return DB::table('movimientos')->whereNull('deleted_at')->whereBetween('fecha', [$from, $to])
+            ->when($request->integer('user_id'), fn ($q, $id) => $q->where('user_id', $id));
+    }
+
     private function detallesQuery(Request $request)
     {
         [$from, $to] = $this->rango($request);
@@ -96,6 +104,9 @@ class ReporteController extends Controller
         $completadas = fn () => $this->ventasQuery($request)->where('estado', 'COMPLETADA');
         $total = (float) $completadas()->sum('total');
         $cantidad = (int) $completadas()->count();
+        $registrados = fn () => $this->movimientosQuery($request)->where('estado', 'REGISTRADO');
+        $mov = MovimientoController::totales(fn () => $this->movimientosQuery($request));
+        $efectivo = (float) $completadas()->sum('monto_efectivo');
         $hourExpr = DB::connection()->getDriverName() === 'sqlite' ? "strftime('%H', fecha)" : "DATE_FORMAT(fecha, '%H')";
         $dayExpr = DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y-%m-%d', fecha)" : 'DATE(fecha)';
 
@@ -108,10 +119,15 @@ class ReporteController extends Controller
                 'ticket_promedio' => $cantidad ? round($total / $cantidad, 2) : 0,
                 'platos' => (int) $this->detallesQuery($request)->sum('d.cantidad'),
                 'descuento' => (float) $completadas()->sum('descuento'),
-                'efectivo' => (float) $completadas()->sum('monto_efectivo'),
+                'efectivo' => $efectivo,
                 'qr' => (float) $completadas()->sum('monto_qr'),
                 'anuladas' => (int) $this->ventasQuery($request)->where('estado', 'ANULADA')->count(),
                 'total_anulado' => (float) $this->ventasQuery($request)->where('estado', 'ANULADA')->sum('total'),
+                ...$mov,
+                'ingresos_qr' => round($mov['ingresos'] - $mov['ingresos_efectivo'], 2),
+                'egresos_qr' => round($mov['egresos'] - $mov['egresos_efectivo'], 2),
+                'neto' => round($total + $mov['ingresos'] - $mov['egresos'], 2),
+                'caja_efectivo' => round($efectivo + $mov['ingresos_efectivo'] - $mov['egresos_efectivo'], 2),
             ],
             'por_producto' => $this->detallesQuery($request)
                 ->selectRaw('d.nombre, MAX(d.categoria) as categoria, SUM(d.cantidad) as cantidad, SUM(d.total) as total, COUNT(DISTINCT d.venta_id) as ventas')
@@ -122,9 +138,11 @@ class ReporteController extends Controller
             'por_usuario' => $completadas()
                 ->selectRaw('usuario_nombre as nombre, COUNT(*) as cantidad, SUM(total) as total, SUM(monto_efectivo) as efectivo, SUM(monto_qr) as qr')
                 ->groupBy('usuario_nombre')->orderByDesc('total')->get(),
-            'por_dia' => $completadas()
-                ->selectRaw("$dayExpr as dia, COUNT(*) as cantidad, SUM(total) as total, SUM(monto_efectivo) as efectivo, SUM(monto_qr) as qr")
-                ->groupByRaw($dayExpr)->orderBy('dia')->get(),
+            'por_dia' => $this->porDia($completadas(), $registrados(), $dayExpr),
+            'por_categoria_movimiento' => $registrados()
+                ->selectRaw("tipo, COALESCE(categoria, 'SIN CATEGORÍA') as nombre, COUNT(*) as cantidad, SUM(monto) as total")
+                ->groupBy('tipo', 'categoria')->orderBy('tipo', 'desc')->orderByDesc('total')->get(),
+            'movimientos' => $this->movimientos($request),
             'por_hora' => $completadas()
                 ->selectRaw("$hourExpr as hora, COUNT(*) as cantidad, SUM(total) as total")
                 ->groupByRaw($hourExpr)->orderBy('hora')->get(),
@@ -139,6 +157,35 @@ class ReporteController extends Controller
                 ->groupBy('cliente_nombre')->orderByDesc('total')->limit(20)->get(),
             'usuarios' => User::orderBy('name')->get(['id', 'name']),
         ];
+    }
+
+    /** Ventas, ingresos y egresos por día en una sola tabla; aparece también el día sin ventas. */
+    private function porDia($ventas, $movs, string $dayExpr)
+    {
+        $porVenta = $ventas->selectRaw("$dayExpr as dia, COUNT(*) as cantidad, SUM(total) as total, SUM(monto_efectivo) as efectivo, SUM(monto_qr) as qr")
+            ->groupByRaw($dayExpr)->get()->keyBy(fn ($r) => substr((string) $r->dia, 0, 10));
+        $porMov = $movs->selectRaw("$dayExpr as dia, SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END) as ingresos, SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END) as egresos")
+            ->groupByRaw($dayExpr)->get()->keyBy(fn ($r) => substr((string) $r->dia, 0, 10));
+
+        return $porVenta->keys()->merge($porMov->keys())->unique()->sort()->values()->map(function ($dia) use ($porVenta, $porMov) {
+            $v = $porVenta[$dia] ?? null;
+            $total = (float) ($v->total ?? 0);
+            $ingresos = (float) ($porMov[$dia]->ingresos ?? 0);
+            $egresos = (float) ($porMov[$dia]->egresos ?? 0);
+
+            return (object) [
+                'dia' => $dia, 'cantidad' => (int) ($v->cantidad ?? 0), 'total' => $total,
+                'efectivo' => (float) ($v->efectivo ?? 0), 'qr' => (float) ($v->qr ?? 0),
+                'ingresos' => $ingresos, 'egresos' => $egresos, 'neto' => round($total + $ingresos - $egresos, 2),
+            ];
+        });
+    }
+
+    /** Todos los ingresos y egresos del periodo, también los anulados (la hoja los marca y no los suma). */
+    private function movimientos(Request $request)
+    {
+        return $this->movimientosQuery($request)->orderBy('fecha')
+            ->get(['id', 'numero', 'fecha', 'usuario_nombre', 'tipo', 'concepto', 'categoria', 'tipo_pago', 'monto', 'monto_efectivo', 'monto_qr', 'estado', 'observacion']);
     }
 
     private function ventas(Request $request)

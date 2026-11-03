@@ -39,16 +39,21 @@ class ConfiguracionController extends Controller
         }
         $image = imagecreatefromstring(file_get_contents($request->file('logo')->getPathname()));
         abort_unless($image, 422, 'No se pudo procesar el logotipo');
-        $width = imagesx($image); $height = imagesy($image);
+        $width = imagesx($image);
+        $height = imagesy($image);
         $scale = min(1, 800 / max($width, $height));
         $output = imagecreatetruecolor((int) ($width * $scale), (int) ($height * $scale));
-        imagealphablending($output, false); imagesavealpha($output, true);
+        imagealphablending($output, false);
+        imagesavealpha($output, true);
         imagecopyresampled($output, $image, 0, 0, 0, 0, imagesx($output), imagesy($output), $width, $height);
         $directory = public_path('images/empresa');
-        if (! is_dir($directory)) mkdir($directory, 0755, true);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
         $filename = 'empresa/logo_'.time().'.webp';
         imagewebp($output, public_path('images/'.$filename), 88);
-        imagedestroy($image); imagedestroy($output);
+        imagedestroy($image);
+        imagedestroy($output);
         $config->update(['logo' => $filename]);
 
         return response()->json($config->fresh());

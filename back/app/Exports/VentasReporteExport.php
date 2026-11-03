@@ -10,9 +10,9 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
 /**
- * Reporte de ventas del periodo en seis hojas: documentos, detalle línea por línea,
- * por producto, por usuario (quién vendió), por día y por hora.
- * Ventas y detalle incluyen lo anulado, pero sus totales sólo suman lo COMPLETADO.
+ * Reporte del periodo en ocho hojas: resumen (cierre de caja), documentos de venta, detalle
+ * línea por línea, ingresos y gastos, por producto, por usuario (quién vendió), por día y por hora.
+ * Ventas, detalle y movimientos incluyen lo anulado, pero sus totales sólo suman lo vigente.
  */
 class VentasReporteExport implements WithMultipleSheets
 {
@@ -21,6 +21,7 @@ class VentasReporteExport implements WithMultipleSheets
         private readonly array $datos,
         private readonly Collection $ventas,
         private readonly Collection $detalles,
+        private readonly Collection $movimientos,
     ) {}
 
     private function fecha(?string $valor): ?float
@@ -34,7 +35,27 @@ class VentasReporteExport implements WithMultipleSheets
         $entero = fn (string $titulo, int $ancho = 11, bool $total = true) => ['titulo' => $titulo, 'ancho' => $ancho, 'formato' => 'entero', 'total' => $total];
         $texto = fn (string $titulo, int $ancho = 18) => ['titulo' => $titulo, 'ancho' => $ancho, 'formato' => 'texto'];
 
+        $r = $this->datos['resumen'];
+
         return [
+            new HojaTabla($this->contexto, 'Resumen', 'RESUMEN Y CIERRE DE CAJA', [
+                $texto('Concepto', 34), ['titulo' => 'Monto', 'ancho' => 16, 'formato' => 'moneda'],
+            ], [
+                ['(+) Total vendido', (float) $r['total']],
+                ['     Efectivo', (float) $r['efectivo']],
+                ['     QR', (float) $r['qr']],
+                ['(+) Otros ingresos', (float) $r['ingresos']],
+                ['     Efectivo', (float) $r['ingresos_efectivo']],
+                ['     QR', (float) $r['ingresos_qr']],
+                ['(-) Gastos / egresos', (float) $r['egresos']],
+                ['     Efectivo', (float) $r['egresos_efectivo']],
+                ['     QR', (float) $r['egresos_qr']],
+                ['(=) Neto (ventas + ingresos - egresos)', (float) $r['neto']],
+                ['Efectivo en caja (efectivo + ingresos - egresos en efectivo)', (float) $r['caja_efectivo']],
+                ['Descuentos otorgados', (float) $r['descuento']],
+                ['Ventas anuladas ('.$r['anuladas'].')', (float) $r['total_anulado']],
+            ]),
+
             new HojaTabla($this->contexto, 'Ventas', 'DOCUMENTOS DE VENTA', [
                 $entero('#', 5, false), $texto('Nº venta', 13), $entero('Pedido', 8, false),
                 ['titulo' => 'Fecha y hora', 'ancho' => 17, 'formato' => 'fechahora'],
@@ -59,6 +80,16 @@ class VentasReporteExport implements WithMultipleSheets
                 $d->observacion, $d->estado,
             ])->all(), 13),
 
+            new HojaTabla($this->contexto, 'Ingresos y gastos', 'INGRESOS Y GASTOS (EGRESOS) DE CAJA', [
+                $entero('#', 5, false), $texto('Número', 13), ['titulo' => 'Fecha y hora', 'ancho' => 17, 'formato' => 'fechahora'],
+                $texto('Registró', 22), $texto('Tipo', 10), $texto('Concepto', 30), $texto('Categoría', 18), $texto('Pago', 11),
+                ['titulo' => 'Efectivo', 'ancho' => 12, 'formato' => 'moneda'], ['titulo' => 'QR', 'ancho' => 12, 'formato' => 'moneda'],
+                $moneda('Ingreso'), $moneda('Egreso'), $texto('Estado', 13), $texto('Observación', 28),
+            ], $this->movimientos->values()->map(fn ($g, $i) => [
+                $i + 1, $g->numero, $this->fecha($g->fecha), $g->usuario_nombre, $g->tipo, $g->concepto, $g->categoria, $g->tipo_pago, (float) $g->monto_efectivo, (float) $g->monto_qr,
+                $g->tipo === 'INGRESO' ? (float) $g->monto : 0.0, $g->tipo === 'EGRESO' ? (float) $g->monto : 0.0, $g->estado, $g->observacion,
+            ])->all(), 12, 'REGISTRADO'),
+
             new HojaTabla($this->contexto, 'Por producto', 'VENTAS POR PRODUCTO', [
                 $entero('#', 5, false), $texto('Producto', 30), $texto('Categoría', 18), $entero('Nº ventas', 11), $entero('Cantidad', 11), $moneda('Total vendido', 15),
             ], collect($this->datos['por_producto'])->values()->map(fn ($p, $i) => [
@@ -71,10 +102,12 @@ class VentasReporteExport implements WithMultipleSheets
                 $u->nombre, (int) $u->cantidad, (float) $u->efectivo, (float) $u->qr, (float) $u->total,
             ])->all()),
 
-            new HojaTabla($this->contexto, 'Por día', 'VENTAS POR DÍA', [
-                ['titulo' => 'Día', 'ancho' => 14, 'formato' => 'fecha'], $entero('Ventas'), $moneda('Efectivo'), $moneda('QR'), $moneda('Total'),
+            new HojaTabla($this->contexto, 'Por día', 'VENTAS, INGRESOS Y GASTOS POR DÍA', [
+                ['titulo' => 'Día', 'ancho' => 14, 'formato' => 'fecha'], $entero('Ventas'), $moneda('Efectivo'), $moneda('QR'), $moneda('Total vendido'),
+                $moneda('Ingresos'), $moneda('Egresos'), $moneda('Neto'),
             ], collect($this->datos['por_dia'])->map(fn ($d) => [
                 $this->fecha($d->dia), (int) $d->cantidad, (float) $d->efectivo, (float) $d->qr, (float) $d->total,
+                (float) $d->ingresos, (float) $d->egresos, (float) $d->neto,
             ])->all()),
 
             new HojaTabla($this->contexto, 'Por hora', 'VENTAS POR HORA DEL DÍA', [

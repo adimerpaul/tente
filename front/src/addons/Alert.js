@@ -74,6 +74,32 @@ export class Alert {
     })
   }
 
+  /** Aviso de cocina en tiempo real (socket): más grande y dura más. */
+  static kitchen (message, subTitle = '', type = 'info') {
+    const styles = {
+      NUEVO: { color: 'secondary', icon: 'notifications_active' },
+      ANULADO: { color: 'negative', icon: 'cancel' },
+      PREPARANDO: { color: 'primary', icon: 'outdoor_grill' },
+      LISTO: { color: 'positive', icon: 'room_service' },
+    }
+    const s = styles[type] || { color: 'dark', icon: 'info' }
+    Notify.create({
+      progress: true,
+      color: s.color,
+      textColor: 'white',
+      position: 'top-right',
+      message,
+      caption: subTitle,
+      timeout: 8000,
+      icon: s.icon,
+      multiLine: true,
+      actions: [
+        { icon: 'close', color: 'white', round: true, size: 'xs' }
+      ],
+      classes: 'text-bold text-subtitle1'
+    })
+  }
+
   static dialog (title, message) {
     return Dialog.create({
       component: Icon,

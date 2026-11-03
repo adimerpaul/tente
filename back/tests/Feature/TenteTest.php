@@ -7,7 +7,10 @@ use App\Models\Producto;
 use App\Models\User;
 use App\Models\Venta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Testing\TestResponse;
 use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class TenteTest extends TestCase
@@ -24,7 +27,7 @@ class TenteTest extends TestCase
         return Producto::where('codigo', $codigo)->firstOrFail();
     }
 
-    private function vender(array $extra = []): \Illuminate\Testing\TestResponse
+    private function vender(array $extra = []): TestResponse
     {
         return $this->postJson('/api/ventas', array_merge([
             'tipo_pago' => 'EFECTIVO',
@@ -70,6 +73,12 @@ class TenteTest extends TestCase
         $this->assertSame(1, $first->json('ticket'));
         $this->assertSame('VENDEDOR TENTÉ', $first->json('usuario_nombre'));
         $this->assertSame('JUAN', $first->json('cliente_nombre'));
+        // El nombre escrito registra al cliente; con el mismo nombre se reutiliza, no se duplica.
+        $juan = Cliente::where('nombre', 'JUAN')->sole();
+        $this->assertSame($juan->id, $first->json('cliente_id'));
+        $this->assertSame($juan->id, $this->vender(['cliente_nombre' => ' Juan '])->assertCreated()->json('cliente_id'));
+        $this->assertSame(Cliente::SIN_NOMBRE, $this->vender()->assertCreated()->json('cliente_id'));
+        $this->vender(['tipo_consumo' => 'MESA'])->assertCreated()->assertJsonPath('tipo_consumo', 'LLEVAR');
         $this->assertEquals(60, $first->json('total'));
         $this->assertSame('PENDIENTE', $first->json('estado_cocina'));
         $this->assertSame('HAMBURGUESA SIMPLE', $first->json('detalles.0.nombre'));
@@ -77,7 +86,7 @@ class TenteTest extends TestCase
 
         $cliente = Cliente::create(['nombre' => 'MARÍA PÉREZ', 'documento' => '123456']);
         $second = $this->vender(['cliente_id' => $cliente->id, 'descuento' => 10])->assertCreated();
-        $this->assertSame(2, $second->json('ticket'));
+        $this->assertSame(5, $second->json('ticket'));
         $this->assertSame('MARÍA PÉREZ', $second->json('cliente_nombre'));
         $this->assertEquals(50, $second->json('total'));
         $this->assertEquals(10, collect($second->json('detalles'))->sum('descuento'));
@@ -113,6 +122,28 @@ class TenteTest extends TestCase
         $this->getJson('/api/ventas')->assertForbidden();
     }
 
+    public function test_kitchen_events_are_sent_to_shared_socket(): void
+    {
+        config(['services.socket.url' => 'https://socket.test']);
+        Http::fake();
+        $this->withoutDefer();
+
+        Sanctum::actingAs($this->user('admin'));
+        $id = $this->vender()->json('id');
+        $this->putJson("/api/ventas/{$id}/cocina", ['estado_cocina' => 'PREPARANDO'])->assertOk();
+        $this->putJson("/api/ventas/{$id}/cocina", ['estado_cocina' => 'LISTO'])->assertOk();
+        $this->putJson("/api/ventas/{$id}/anular")->assertOk();
+
+        $sent = Http::recorded()->map(fn ($pair) => $pair[0]);
+        $this->assertSame(['NUEVO', 'PREPARANDO', 'LISTO', 'ANULADO'], $sent->map(fn ($r) => $r['data']['tipo'])->all());
+        $sent->each(function ($r) {
+            $this->assertSame('https://socket.test/notify', $r->url());
+            $this->assertSame('tente-cocina', $r['event']);
+        });
+        $this->assertStringContainsString('2 HAMBURGUESA SIMPLE SIN CEBOLLA', $sent[0]['data']['mensaje']);
+        $this->assertStringContainsString('listo para entregar', $sent[2]['data']['mensaje']);
+    }
+
     public function test_cancelled_sale_leaves_kitchen_and_reports(): void
     {
         Sanctum::actingAs($this->user('admin'));
@@ -128,6 +159,44 @@ class TenteTest extends TestCase
         $this->assertSame('HAMBURGUESA SIMPLE', $report->json('por_producto.0.nombre'));
 
         $this->getJson('/api/dashboard?periodo=hoy')->assertOk()->assertJsonPath('indicadores.cantidad_ventas', 1);
+        $this->get('/api/reportes-exportar/excel')->assertOk();
+        $this->get('/api/reportes-exportar/pdf')->assertOk();
+    }
+
+    public function test_movimientos_ingreso_egreso_suman_en_caja_y_reportes(): void
+    {
+        Sanctum::actingAs($this->user('vendedor'));
+        $this->vender()->assertCreated(); // 60 en efectivo
+        $this->postJson('/api/movimientos', ['tipo' => 'EGRESO', 'concepto' => 'aceite', 'categoria' => 'insumos', 'monto' => 25, 'tipo_pago' => 'EFECTIVO'])
+            ->assertCreated()->assertJsonPath('concepto', 'ACEITE')->assertJsonPath('categoria', 'INSUMOS');
+        $this->postJson('/api/movimientos', ['tipo' => 'EGRESO', 'concepto' => 'periódicos', 'monto' => 5, 'tipo_pago' => 'QR'])->assertCreated();
+        // Pago mixto: efectivo + QR debe dar el monto (23 sin decimales también vale).
+        $this->postJson('/api/movimientos', ['tipo' => 'EGRESO', 'concepto' => 'gas', 'monto' => 23, 'tipo_pago' => 'COMBINADO', 'monto_efectivo' => 20, 'monto_qr' => 2])->assertStatus(422);
+        $this->postJson('/api/movimientos', ['tipo' => 'EGRESO', 'concepto' => 'gas', 'monto' => 23, 'tipo_pago' => 'COMBINADO', 'monto_efectivo' => 20, 'monto_qr' => 3])
+            ->assertCreated()->assertJsonPath('monto_efectivo', '20.00')->assertJsonPath('monto_qr', '3.00');
+        $ingreso = $this->postJson('/api/movimientos', ['tipo' => 'INGRESO', 'concepto' => 'venta de aceite usado', 'monto' => 10, 'tipo_pago' => 'EFECTIVO'])
+            ->assertCreated()->json();
+        $this->assertStringStartsWith('I-', $ingreso['numero']);
+        $this->postJson('/api/movimientos', ['tipo' => 'OTRO', 'concepto' => 'x', 'monto' => 1, 'tipo_pago' => 'EFECTIVO'])->assertStatus(422);
+        $this->putJson("/api/movimientos/{$ingreso['id']}/anular")->assertForbidden();
+
+        $hoy = today()->toDateString();
+        $resumen = $this->getJson("/api/ventas-resumen?desde={$hoy}&hasta={$hoy}")->assertOk();
+        $this->assertEquals(10, $resumen->json('ingresos'));
+        $this->assertEquals(53, $resumen->json('egresos'));       // 25 + 5 + 23
+        $this->assertEquals(17, $resumen->json('neto'));          // 60 + 10 - 53
+        $this->assertEquals(25, $resumen->json('caja_efectivo')); // 60 + 10 - (25 + 20 del mixto)
+        $this->assertSame(4, $this->getJson("/api/movimientos?desde={$hoy}")->assertOk()->json('total'));
+        $this->assertContains('VENTA DE ACEITE', $this->getJson('/api/movimientos-catalogos')->json('categorias.INGRESO'));
+
+        Sanctum::actingAs($this->user('admin'));
+        $this->putJson("/api/movimientos/{$ingreso['id']}/anular")->assertOk()->assertJsonPath('estado', 'ANULADO');
+        $report = $this->getJson('/api/reportes')->assertOk();
+        $this->assertEquals(0, $report->json('resumen.ingresos'));
+        $this->assertEquals(7, $report->json('resumen.neto'));
+        $this->assertEquals(8, $report->json('resumen.egresos_qr')); // 5 por QR + 3 del mixto
+        $this->assertEquals(53, $report->json('por_dia.0.egresos'));
+        $this->assertCount(4, $report->json('movimientos'));
         $this->get('/api/reportes-exportar/excel')->assertOk();
         $this->get('/api/reportes-exportar/pdf')->assertOk();
     }
@@ -159,7 +228,7 @@ class TenteTest extends TestCase
         $roles = collect($this->getJson('/api/roles')->assertOk()->json())->keyBy('name');
         $this->assertSame(['Administrador', 'Vendedor', 'Cocinero'], $roles->keys()->all());
 
-        $verCocina = \Spatie\Permission\Models\Permission::where('name', 'Ver Cocina')->value('id');
+        $verCocina = Permission::where('name', 'Ver Cocina')->value('id');
         $role = $this->postJson('/api/roles', ['name' => 'Mesero', 'permissions' => [$verCocina]])->assertCreated()->json('id');
         $userId = $this->postJson('/api/users', ['name' => 'pedro', 'username' => 'pedro', 'password' => '123456', 'rol' => 'Mesero'])
             ->assertCreated()->json('id');

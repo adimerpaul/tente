@@ -21,6 +21,11 @@
 
         <q-space />
 
+        <q-btn flat round dense :color="voz.enabled ? 'primary' : 'grey-6'" :icon="voz.enabled ? 'record_voice_over' : 'voice_over_off'" class="q-mr-xs" @click="abrirVoz">
+          <q-badge v-if="!socketOk" floating rounded color="negative" style="padding:3px" />
+          <q-tooltip>Avisos de cocina por voz {{ socketOk ? '' : '(sin conexión al socket)' }}</q-tooltip>
+        </q-btn>
+
         <q-btn-dropdown flat unelevated no-caps dropdown-icon="expand_more">
           <template v-slot:label>
             <div class="header-user row items-center no-wrap">
@@ -108,6 +113,34 @@
     <q-page-container class="page-bg">
       <router-view />
     </q-page-container>
+
+    <!-- Voz de los avisos de cocina: se guarda en localStorage (vozTente), por dispositivo -->
+    <q-dialog v-model="vozDialog">
+      <q-card style="width: 420px; max-width: 95vw">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-subtitle1 text-weight-bold">Avisos por voz</div>
+          <q-space />
+          <q-chip dense square :color="socketOk ? 'positive' : 'negative'" text-color="white" :icon="socketOk ? 'wifi' : 'wifi_off'" :label="socketOk ? 'Tiempo real' : 'Sin socket'" />
+        </q-card-section>
+        <q-card-section class="q-gutter-sm">
+          <div v-if="!voiceSupported()" class="text-negative">Este navegador no permite leer en voz alta.</div>
+          <q-toggle v-model="voz.enabled" label="Leer los avisos en voz alta" />
+          <q-select v-model="voz.voiceURI" :options="voiceOptions" emit-value map-options dense outlined label="Voz" :disable="!voz.enabled"
+                    hint="Las voces «Google» son las de Chrome / Android" />
+          <q-toggle v-model="todasLasVoces" dense size="sm" label="Mostrar voces de otros idiomas" />
+          <div class="text-caption text-grey-8">Velocidad {{ voz.rate }}</div>
+          <q-slider v-model="voz.rate" :min="0.5" :max="1.6" :step="0.1" color="primary" :disable="!voz.enabled" />
+          <div class="text-caption text-grey-7">
+            {{ $store.hasPermission('Ver Cocina') ? 'Se anuncian los pedidos nuevos, anulados, en preparación y listos.' : 'Se anuncian los pedidos en preparación y listos para entregar.' }}
+            La voz sólo suena con la pantalla de Cocina abierta; en las demás páginas el aviso es sólo visual.
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat no-caps icon="volume_up" label="Probar" color="primary" @click="probarVoz" />
+          <q-btn unelevated no-caps label="Guardar" color="primary" @click="guardarVoz" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-layout>
 </template>
 
@@ -115,8 +148,26 @@
 import { computed, getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
 import { clearSession } from '../addons/sesion'
 import { companyData } from '../addons/empresa'
+import { connectSocket, loadVoices, onCocina, saveVoiceSettings, speak, voiceSettings, voiceSupported } from '../addons/cocinaSocket'
 
 const { proxy } = getCurrentInstance()
+
+// ── Avisos de cocina en tiempo real (socket compartido, evento tente-cocina) ──
+const voz = ref(voiceSettings()), vozDialog = ref(false), voces = ref([]), todasLasVoces = ref(false), socketOk = ref(false)
+const voiceOptions = computed(() => [{ label: 'Automática (Google español)', value: '' }, ...voces.value.filter(v => todasLasVoces.value || v.lang?.toLowerCase().startsWith('es')).map(v => ({ label: `${v.name} (${v.lang})`, value: v.voiceURI }))])
+// Cocina oye todo lo que le toca preparar; la caja, cuándo está en preparación y listo para entregar.
+const avisosPara = () => proxy.$store.hasPermission('Ver Cocina') ? ['NUEVO', 'ANULADO', 'PREPARANDO', 'LISTO'] : proxy.$store.hasPermission('Crear Ventas') ? ['PREPARANDO', 'LISTO'] : []
+function abrirVoz () { voz.value = voiceSettings(); loadVoices().then(v => { voces.value = v }); vozDialog.value = true }
+function probarVoz () { speak('Nuevo pedido número 12, Juan, para llevar: 2 salchipapa grande', { ...voz.value, force: true }) }
+function guardarVoz () { saveVoiceSettings(voz.value); proxy.$alert.success('Voz guardada') }
+let offCocina = null, socket = null
+const socketEstado = () => { socketOk.value = !!socket?.connected }
+function avisoCocina (data) {
+  if (!proxy.$store.isLogged || !avisosPara().includes(data?.tipo)) return
+  proxy.$alert.kitchen(data.mensaje, data.usuario_nombre || '', data.tipo)
+  // La voz sólo suena en la pantalla de cocina; en la caja y demás páginas el aviso es sólo visual.
+  if (proxy.$route.path.startsWith('/cocina')) speak(data.mensaje)
+}
 
 const leftDrawerOpen = ref(false)
 const companyName = ref(companyData().nombre_empresa || 'Tenté')
@@ -149,6 +200,9 @@ function toggleLeftDrawer () {
 onMounted(() => {
   window.addEventListener('online', marcarEstadoRed)
   window.addEventListener('offline', marcarEstadoRed)
+  socket = connectSocket()
+  socket?.on('connect', socketEstado); socket?.on('disconnect', socketEstado); socketEstado()
+  offCocina = onCocina(avisoCocina)
   proxy.$axios.get('/configuracion').then(({ data }) => {
     data.logo_url = data.logo ? `${proxy.$imgBase}/images/${data.logo}` : null
     companyName.value = data.nombre_empresa || 'Tenté'
@@ -159,6 +213,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('online', marcarEstadoRed)
   window.removeEventListener('offline', marcarEstadoRed)
+  offCocina?.(); socket?.off('connect', socketEstado); socket?.off('disconnect', socketEstado)
 })
 
 function logout () {

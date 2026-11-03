@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConfiguracionController;
+use App\Http\Controllers\MovimientoController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\UserController;
@@ -48,6 +49,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [VentaController::class, 'dashboard']);
     Route::get('/ventas/{venta}', [VentaController::class, 'show']);
     Route::put('/ventas/{venta}/anular', [VentaController::class, 'cancel']);
+
+    Route::get('/movimientos', [MovimientoController::class, 'index']);
+    Route::get('/movimientos-catalogos', [MovimientoController::class, 'catalogos']);
+    Route::post('/movimientos', [MovimientoController::class, 'store']);
+    Route::put('/movimientos/{movimiento}/anular', [MovimientoController::class, 'cancel']);
 
     Route::get('/cocina', [VentaController::class, 'cocina']);
     Route::put('/ventas/{venta}/cocina', [VentaController::class, 'updateCocina']);

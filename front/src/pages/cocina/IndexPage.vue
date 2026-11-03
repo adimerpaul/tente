@@ -1,9 +1,9 @@
 <template>
   <q-page class="q-pa-sm kitchen">
     <div class="row items-center q-mb-sm">
-      <div><div class="text-subtitle1 text-weight-bold">Cocina</div><div class="text-caption text-grey-7">Pedidos de hoy · se actualiza cada {{REFRESH/1000}} s</div></div>
+      <div><div class="text-subtitle1 text-weight-bold">Cocina</div><div class="text-caption text-grey-7">Pedidos de hoy · <span :class="live?'text-positive':'text-negative'"><q-icon :name="live?'wifi':'wifi_off'"/> {{live?'en tiempo real':'sin socket, se actualiza cada '+REFRESH/1000+' s'}}</span></div></div>
       <q-space/>
-      <q-toggle v-model="sound" dense size="sm" icon="volume_up" label="Sonido" class="q-mr-sm"/>
+      <q-toggle v-model="sound" dense size="sm" icon="volume_up" label="Voz" class="q-mr-sm" @update:model-value="v=>saveVoiceSettings({enabled:v})"/>
       <q-btn dense flat round icon="refresh" color="primary" :loading="loading" @click="load"/>
     </div>
 
@@ -47,9 +47,10 @@
 
 <script setup>
 import { computed, getCurrentInstance, onMounted, onUnmounted, ref } from 'vue'
+import { connectSocket, onCocina, saveVoiceSettings, socketConnected, voiceSettings } from '../../addons/cocinaSocket'
 const { proxy } = getCurrentInstance()
 const REFRESH=8000
-const orders=ref([]),delivered=ref([]),loading=ref(false),moving=ref(null),now=ref(Date.now()),sound=ref(localStorage.getItem('cocinaSonidoTente')!=='0')
+const orders=ref([]),delivered=ref([]),loading=ref(false),moving=ref(null),now=ref(Date.now()),sound=ref(voiceSettings().enabled),live=ref(false)
 const canUpdate=computed(()=>proxy.$store.hasPermission('Actualizar Pedidos'))
 const columns=[
   {estado:'PENDIENTE',label:'Pendientes',icon:'notifications_active',prev:null,next:'PREPARANDO',nextLabel:'Preparar',nextIcon:'local_fire_department',nextColor:'primary'},
@@ -58,13 +59,15 @@ const columns=[
 ]
 const byState=s=>orders.value.filter(o=>o.estado_cocina===s)
 const time=v=>new Date(v).toLocaleTimeString('es-BO',{hour:'2-digit',minute:'2-digit'}),minutes=p=>Math.max(0,Math.floor((now.value-new Date(p.fecha).getTime())/60000))
-let timer=null,clock=null,known=null
+let timer=null,clock=null,known=null,offCocina=null,socket=null,reloadT=null
+// Con socket la lista se recarga al llegar cada aviso (la voz y el mensaje los pone MainLayout); el sondeo queda de respaldo.
+const setLive=()=>{live.value=socketConnected()},onAviso=()=>{clearTimeout(reloadT);reloadT=setTimeout(load,250)}
 // Pitido corto con WebAudio cuando entra un pedido nuevo; no necesita archivos de sonido.
-function beep(){if(!sound.value)return;try{const ctx=new (window.AudioContext||window.webkitAudioContext)(),o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=880;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.2,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.6);o.start();o.stop(ctx.currentTime+.6)}catch{/* sin audio */}}
+function beep(){if(!sound.value||live.value)return;try{const ctx=new (window.AudioContext||window.webkitAudioContext)(),o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=880;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.2,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.6);o.start();o.stop(ctx.currentTime+.6)}catch{/* sin audio */}}
 function load(){loading.value=true;proxy.$axios.get('/cocina').then(({data})=>{const ids=new Set(data.pedidos.map(p=>p.id));if(known&&[...ids].some(id=>!known.has(id)))beep();known=ids;orders.value=data.pedidos;delivered.value=data.entregados}).catch(e=>{if(e.response)proxy.$alert.error(e.response?.data?.message||'No se pudieron cargar los pedidos')}).finally(()=>loading.value=false)}
 function move(p,estado){moving.value=p.id;proxy.$axios.put(`/ventas/${p.id}/cocina`,{estado_cocina:estado}).then(load).catch(e=>proxy.$alert.error(e.response?.data?.message||'No se pudo actualizar')).finally(()=>moving.value=null)}
-onMounted(()=>{load();timer=setInterval(load,REFRESH);clock=setInterval(()=>now.value=Date.now(),30000)})
-onUnmounted(()=>{clearInterval(timer);clearInterval(clock);localStorage.setItem('cocinaSonidoTente',sound.value?'1':'0')})
+onMounted(()=>{load();timer=setInterval(()=>{if(!live.value)load()},REFRESH);clock=setInterval(()=>{now.value=Date.now();if(live.value)load()},30000);socket=connectSocket();socket?.on('connect',setLive);socket?.on('disconnect',setLive);socket?.on('connect',load);setLive();offCocina=onCocina(onAviso)})
+onUnmounted(()=>{clearInterval(timer);clearInterval(clock);clearTimeout(reloadT);offCocina?.();socket?.off('connect',setLive);socket?.off('disconnect',setLive);socket?.off('connect',load)})
 </script>
 
 <style scoped>
