@@ -1,0 +1,1 @@
+var e=[[/TODO/,`restaurant_menu`],[/HAMBURG|BURG/,`lunch_dining`],[/SALCHI|PAPA/,`fastfood`],[/POLLO|ALITA|BROASTER/,`kebab_dining`],[/PIQUE|PLATO|ALMUERZO/,`dinner_dining`],[/PIZZA/,`local_pizza`],[/BEBIDA|REFRESCO|GASEOSA|JUGO/,`local_drink`],[/POSTRE|HELADO/,`icecream`],[/COMBO|PROMO/,`redeem`]],t=t=>(e.find(([e])=>e.test(t||``))||[null,`restaurant`])[1];export{t};
